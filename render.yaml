@@ -14,4 +14,4 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ORIGIN
-        value: https://frontend-priyanshu270408s-projects.vercel.app
+        value: https://astra-care-two.vercel.app
