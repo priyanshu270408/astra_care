@@ -1,22 +1,43 @@
+
 import { Server as HttpServer } from "http";
 import { Server } from "socket.io";
+import { connectDatabase } from "./db";
 
 let io: Server;
 
 export function initSocket(server: HttpServer): Server {
   io = new Server(server, {
     cors: {
-      origin: (process.env.CORS_ORIGIN || "http://localhost:5173").split(","),
+      origin: (process.env.CORS_ORIGIN || "")
+        .split(",")
+        .filter(Boolean),
       methods: ["GET", "POST", "PATCH"]
+    },
+    transports: ["websocket"]
+  });
+
+  io.use(async (_socket, next) => {
+    try {
+      await connectDatabase();
+      next();
+    } catch (error) {
+      next(new Error("Database unavailable"));
     }
   });
+
   io.on("connection", socket => {
     console.log("Dashboard connected:", socket.id);
-    socket.on("disconnect", () => console.log("Dashboard disconnected:", socket.id));
+
+    socket.on("disconnect", () => {
+      console.log("Dashboard disconnected:", socket.id);
+    });
   });
+
   return io;
 }
 
 export function emitEvent(event: string, payload: unknown): void {
-  if (io) io.emit(event, payload);
+  if (io) {
+    io.emit(event, payload);
+  }
 }
